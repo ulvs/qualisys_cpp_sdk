@@ -49,7 +49,7 @@ jobs:
 
       - name: Configure CMake
         # Single-line command works on both Windows (PowerShell) & Linux (Bash).
-        run: cmake -S . -B build -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_CXX_FLAGS="-Wno-missing-braces" -Dqualisys_cpp_sdk_BUILD_TESTS=ON
+        run: cmake -S . -B build -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}  -Dqualisys_cpp_sdk_BUILD_TESTS=ON -DCMAKE_CXX_FLAGS="-Wno-missing-braces"
 
       - name: Build
         # On Windows + MSVC (multi-config generator), --config picks Release/Debug.
