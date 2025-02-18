@@ -2,7 +2,7 @@ name: CMake on multiple platforms
 
 on:
   push:
-    branches: [ "master" ]  # or "main" if that is your default branch
+    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
@@ -17,22 +17,22 @@ jobs:
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         include:
-          # --- Windows with MSVC (cl) ---
+          # Windows + MSVC
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
-          
-          # --- Ubuntu with GCC ---
+
+          # Ubuntu + GCC
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-          
-          # --- Ubuntu with Clang ---
+
+          # Ubuntu + Clang
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
 
-        # Exclude incompatible combos
+        # Exclude invalid combos (e.g., trying gcc on Windows)
         exclude:
           - os: windows-latest
             c_compiler: gcc
@@ -42,36 +42,21 @@ jobs:
             c_compiler: cl
 
     steps:
-      - name: Check out repository (with submodules)
+      - name: Check out repository
         uses: actions/checkout@v4
         with:
-          submodules: true   # <<--- Important for pulling submodules
-
-      - name: Set reusable strings
-        id: strings
-        shell: bash
-        run: |
-          # We'll put all build outputs in a subfolder named "build" (you can name it anything).
-          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+          submodules: true  # Important: pulls in any Git submodules
 
       - name: Configure CMake
-        run: |
-          cmake -S "${{ github.workspace }}" \
-                -B "${{ steps.strings.outputs.build-output-dir }}" \
-                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-                -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
-                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-                -Dqualisys_cpp_sdk_BUILD_TESTS=ON
-          # ^ Add other options if needed, e.g.:
-          #   -Dqualisys_cpp_sdk_BUILD_EXAMPLES=ON
+        # Single-line command works on both Windows (PowerShell) & Linux (Bash).
+        run: cmake -S . -B build -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -Dqualisys_cpp_sdk_BUILD_TESTS=ON
 
       - name: Build
-        run: cmake --build "${{ steps.strings.outputs.build-output-dir }}" --config ${{ matrix.build_type }}
-        # Note: On Windows with the Visual Studio generator, --config is required to select Release vs Debug.
-        # On Linux with Make, the --config is ignored but harmless.
+        # On Windows + MSVC (multi-config generator), --config picks Release/Debug.
+        # On Linux + Make/Ninja (single-config), --config is simply ignored, which is fine.
+        run: cmake --build build --config ${{ matrix.build_type }}
 
       - name: Test
-        working-directory: ${{ steps.strings.outputs.build-output-dir }}
+        working-directory: build
+        # --build-config is needed for multi-config Windows. Linux ignores it, which is okay.
         run: ctest --build-config ${{ matrix.build_type }} --output-on-failure
-        # ctest automatically looks for tests. The --build-config is needed for multi-config
-        # (Visual Studio). On single-config (Make, Ninja), it is ignored.
