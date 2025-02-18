@@ -25,8 +25,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
 )
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_compile_options(-Wno-missing-braces)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wno-missing-braces -Wno-error=missing-braces)
 endif()
 
 
